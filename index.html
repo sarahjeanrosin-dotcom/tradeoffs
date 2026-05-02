@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tradeoffs by Design</title>
+<style>
+/* ── RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #faf9f7;
+  --bg2: #f2f0ec;
+  --card: #ffffff;
+  --border: #e4e0d8;
+  --border2: #d0ccc3;
+  --accent: #4a9e95;
+  --accent-light: #e8f4f3;
+  --accent-dark: #357a72;
+  --amber: #d4843a;
+  --amber-light: #fdf3e7;
+  --text: #1a1917;
+  --text2: #5a5751;
+  --text3: #8a8680;
+  --red: #c0544a;
+  --red-light: #fdf0ef;
+  --green: #4a8c6f;
+  --green-light: #ebf5f0;
+  --purple: #7b5ea7;
+  --purple-light: #f2eef8;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
+  --transition: 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── SCREENS ──────────────────────────────────────────── */
+.screen {
+  display: none;
+  min-height: 100vh;
+  animation: fadeSlideIn var(--transition) both;
+}
+.screen.active { display: block; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── LAYOUT ───────────────────────────────────────────── */
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.container-wide {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ── PROGRESS BAR ─────────────────────────────────────── */
+.progress-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(250, 249, 247, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+}
+.progress-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.progress-label {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.progress-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.progress-steps {
+  display: flex;
+  gap: 6px;
+}
+.progress-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.progress-dot.done { background: var(--accent); }
+.progress-dot.current { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+
+/* ── TYPOGRAPHY ───────────────────────────────────────── */
+h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+h2 { font-size: clamp(22px, 3.5vw, 32px); font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; }
+h3 { font-size: 18px; font-weight: 600; }
+h4 { font-size: 15px; font-weight: 600; }
+p { color: var(--text2); }
+
+/* ── BUTTONS ──────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 28px;
+  border: none; border-radius: var(--radius-sm); cursor: pointer;
+  font-size: 15px; font-weight: 600;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(74,158,149,0.3);
+}
+.btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(74,158,149,0.35); }
+.btn-primary:active { transform: translateY(0); }
+.btn-secondary {
+  background: var(--bg2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--border); }
+.btn-lg { padding: 18px 36px; font-size: 17px; border-radius: 14px; }
+.btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 8px; }
+
+/* ── SCREEN 1: WELCOME ────────────────────────────────── */
+#screen-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+.welcome-content {
+  max-width: 580px;
+  text-align: center;
+}
+.welcome-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.welcome-title {
+  margin-bottom: 12px;
+}
+.welcome-subtitle {
+  font-size: 18px;
+  color: var(--text3);
+  font-weight: 400;
+  margin-bottom: 28px;
+}
+.welcome-intro {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text2);
+  margin-bottom: 48px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.welcome-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+.welcome-stat {
+  text-align: center;
+}
+.welcome-stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+}
+.welcome-stat-label {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+/* ── SCREEN 2: DEVICE SELECTION ───────────────────────── */
+#screen-devices .page-header {
+  padding: 40px 0 24px;
+}
+.page-header h2 { margin-bottom: 8px; }
+.page-header p { font-size: 15px; }
+
+.search-bar-wrap {
+  position: sticky;
+  top: 53px;
+  z-index: 90;
+  background: rgba(250,249,247,0.95);
+  backdrop-filter: blur(6px);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  transition: border-color 0.2s;
+}
+.search-bar:focus-within { border-color: var(--accent); }
+.search-bar svg { color: var(--text3); flex-shrink: 0; }
+.search-bar input {
+  border: none; outline: none; background: transparent;
+  font-size: 14px; color: var(--text); width: 100%;
+}
+.search-bar input::placeholder { color: var(--text3); }
+
+.category-section {
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+.category-header:hover { background: var(--bg2); }
+.category-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.category-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.category-info h4 { font-size: 14px; font-weight: 600; }
+.category-info span { font-size: 12px; color: var(--text3); }
+.category-chevron {
+  color: var(--text3);
+  transition: transform 0.25s;
+}
+.category-section.open .category-chevron { transform: rotate(180deg); }
+
+.device-grid {
+  display: none;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border);
+}
+.category-section.open .device-grid { display: grid; }
+
+.device-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg);
+  position: relative;
+}
+.device-card:hover { border-color: var(--accent); background: var(--accent-light); }
+.device-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.device-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.device-card-icon { font-size: 22px; margin-bottom: 6px; }
+.device-card-name { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.3; }
+.device-card-score { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+.add-custom-btn {
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  text-align: center;
+  color: var(--text3);
+  font-size: 12px;
+  font-weight: 500;
+}
+.add-custom-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+.devices-footer {
+  position: sticky;
+  bottom: 0;
+  background: rgba(250,249,247,0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.selected-count {
+  font-size: 14px;
+  color: var(--text2);
+}
+.selected-count strong { color: var(--accent); }
+
+/* ── SCREEN 3: FREQUENCY ──────────────────────────────── */
+#screen-frequency .page-header { padding: 40px 0 24px; }
+
+.frequency-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 120px;
+}
+.frequency-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.frequency-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.frequency-item-icon { font-size: 24px; }
+.frequency-item-name { font-size: 15px; font-weight: 600; }
+.frequency-item-cat { font-size: 12px; color: var(--text3); }
+.frequency-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.freq-btn {
+  padding: 7px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  color: var(--text2);
+}
+.freq-btn:hover { border-color: var(--accent); color: var(--accent); }
+.freq-btn.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ── SCREEN 4: CONTEXT QUESTIONS ──────────────────────── */
+#screen-context {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+.context-card {
+  max-width: 560px;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px;
+  box-shadow: var(--shadow-md);
+}
+.context-step-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+}
+.context-question {
+  font-size: clamp(18px, 2.5vw, 22px);
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 32px;
+  color: var(--text);
+}
+.context-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.context-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s;
+  background: var(--bg);
+}
+.context-option:hover { border-color: var(--accent); background: var(--accent-light); }
+.context-option.selected { border-color: var(--accent); background: var(--accent-light); }
+.context-option-label { font-size: 14px; font-weight: 500; color: var(--text); }
+.context-option-pts { font-size: 12px; color: var(--text3); }
+.context-option.selected .context-option-pts { color: var(--accent); font-weight: 600; }
+
+.context-nav {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+/* ── SCREEN 5: RESULTS ────────────────────────────────── */
+#screen-results { padding: 0 0 80px; }
+.results-hero {
+  background: linear-gradient(135deg, #f0f9f8 0%, #faf9f7 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 48px 20px 40px;
+  text-align: center;
+}
+.results-title { margin-bottom: 6px; }
+.results-subtitle { font-size: 16px; margin-bottom: 40px; }
+
+.score-ring-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+.score-ring {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+.score-ring svg {
+  width: 180px; height: 180px;
+  transform: rotate(-90deg);
+}
+.score-ring-track { fill: none; stroke: var(--border); stroke-width: 12; }
+.score-ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 502;
+  stroke-dashoffset: 502;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.score-ring-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.score-number {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+}
+.score-label { font-size: 12px; color: var(--text3); font-weight: 500; margin-top: 4px; }
+
+.sub-scores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.sub-score-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.sub-score-icon { font-size: 22px; margin-bottom: 8px; }
+.sub-score-value { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+.sub-score-name { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.results-section {
+  padding: 48px 20px 0;
+}
+.results-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text3);
+  margin-bottom: 20px;
+}
+
+.tradeoff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+.tradeoff-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.tradeoff-card-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.tradeoff-cat-icon { font-size: 20px; }
+.tradeoff-cat-name { font-size: 14px; font-weight: 700; }
+.tradeoff-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.tradeoff-col {
+  padding: 16px;
+}
+.tradeoff-col:first-child {
+  border-right: 1px solid var(--border);
+}
+.tradeoff-col-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+.tradeoff-col.get .tradeoff-col-label { color: var(--green); }
+.tradeoff-col.trade .tradeoff-col-label { color: var(--red); }
+.tradeoff-col p { font-size: 13px; line-height: 1.55; }
+
+.device-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.device-breakdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+.device-breakdown-left { display: flex; align-items: center; gap: 10px; }
+.device-breakdown-icon { font-size: 18px; }
+.device-breakdown-name { font-size: 13px; font-weight: 600; }
+.device-breakdown-freq { font-size: 11px; color: var(--text3); }
+.device-breakdown-score {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── SCREEN 6: INTERPRETATION ─────────────────────────── */
+#screen-interpretation { padding: 60px 20px 80px; }
+
+.interpretation-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 48px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+}
+.interpretation-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.range-low { background: var(--green-light); color: var(--green); }
+.range-medium { background: var(--amber-light); color: var(--amber); }
+.range-high { background: var(--red-light); color: var(--red); }
+.range-very-high { background: #f5eef8; color: var(--purple); }
+
+.interpretation-text {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--text);
+}
+
+.next-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.next-step-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.next-step-icon { font-size: 24px; margin-bottom: 10px; }
+.next-step-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.next-step-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+.results-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+/* ── CUSTOM DEVICE MODAL ──────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 36px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  transform: scale(0.95);
+  transition: transform 0.25s;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+
+.modal h3 { margin-bottom: 6px; }
+.modal > p { font-size: 14px; color: var(--text3); margin-bottom: 24px; }
+
+.modal-field { margin-bottom: 18px; }
+.modal-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text2); }
+.modal-field input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.modal-field input[type="text"]:focus { border-color: var(--accent); }
+
+.rubric-question { margin-bottom: 16px; }
+.rubric-question-label { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.rubric-radio-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.rubric-radio {
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--bg2);
+  transition: all 0.15s;
+  color: var(--text2);
+}
+.rubric-radio:hover { border-color: var(--accent); color: var(--accent); }
+.rubric-radio.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+/* ── PRINT STYLES ─────────────────────────────────────── */
+@media print {
+  body { background: white; color: black; font-size: 12px; }
+  .screen { display: block !important; }
+  .screen:not(#screen-print) { display: none !important; }
+  #screen-print { display: block !important; }
+  .progress-bar, .devices-footer, .btn, .results-actions,
+  #screen-welcome, #screen-devices, #screen-frequency,
+  #screen-context, #screen-results, #screen-interpretation { display: none !important; }
+
+  .print-page { padding: 0; }
+  .print-header {
+    text-align: center;
+    border-bottom: 2px solid #4a9e95;
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+  }
+  .print-header h1 { font-size: 28px; color: #1a1917; margin-bottom: 4px; }
+  .print-header p { color: #5a5751; font-size: 13px; }
+  .print-score-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    justify-content: center;
+  }
+  .print-score-main {
+    text-align: center;
+    padding: 20px;
+    border: 2px solid #4a9e95;
+    border-radius: 12px;
+    min-width: 140px;
+  }
+  .print-score-main .num { font-size: 48px; font-weight: 800; color: #4a9e95; }
+  .print-score-main .lbl { font-size: 11px; color: #8a8680; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .print-sub-scores {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .print-sub {
+    border: 1px solid #e4e0d8;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+  .print-sub .val { font-size: 22px; font-weight: 700; color: #1a1917; }
+  .print-sub .lbl { font-size: 10px; color: #8a8680; font-weight: 600; text-transform: uppercase; }
+  .print-section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #8a8680; margin-bottom: 10px; margin-top: 20px;
+  }
+  .print-device-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .print-device-table th, .print-device-table td { padding: 7px 10px; border-bottom: 1px solid #e4e0d8; font-size: 12px; text-align: left; }
+  .print-device-table th { font-weight: 700; color: #5a5751; background: #f2f0ec; }
+  .print-tradeoff-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .print-tradeoff-col { padding: 8px 10px; border: 1px solid #e4e0d8; border-radius: 6px; font-size: 11px; }
+  .print-tradeoff-col h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+  .print-tradeoff-col.get h4 { color: #4a8c6f; }
+  .print-tradeoff-col.trade h4 { color: #c0544a; }
+  .print-interpretation-box { padding: 14px; border: 1px solid #4a9e95; border-radius: 8px; background: #e8f4f3; margin-bottom: 20px; font-size: 13px; line-height: 1.6; }
+  .print-footer { text-align: center; font-size: 10px; color: #8a8680; border-top: 1px solid #e4e0d8; padding-top: 12px; margin-top: 24px; }
+  .no-print { display: none !important; }
+}
+
+/* ── MISC UTILITIES ───────────────────────────────────── */
+.hidden { display: none !important; }
+.mt-4 { margin-top: 16px; }
+.mt-6 { margin-top: 24px; }
+.mb-0 { margin-bottom: 0; }
+.text-accent { color: var(--accent); }
+
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.pill-accent { background: var(--accent-light); color: var(--accent-dark); }
+
+.divider { height: 1px; background: var(--border); margin: 32px 0; }
+
+/* ── RESPONSIVE ───────────────────────────────────────── */
+@media (max-width: 600px) {
+  .context-card { padding: 28px 20px; }
+  .interpretation-card { padding: 24px 20px; }
+  .welcome-stats { gap: 20px; }
+  .device-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .tradeoff-body { grid-template-columns: 1fr; }
+  .tradeoff-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  .frequency-options { gap: 4px; }
+  .freq-btn { font-size: 11px; padding: 6px 10px; }
+  .results-actions { flex-direction: column; }
+  .print-sub-scores { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ── PROGRESS BAR ──────────────────────────────────── -->
+<div class="progress-bar hidden" id="progress-bar">
+  <div class="progress-inner">
+    <span class="progress-label" id="progress-label">Step 2 of 6</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width: 16%"></div>
+    </div>
+    <div class="progress-steps" id="progress-dots"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 1 — WELCOME
+══════════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-welcome">
+  <div class="welcome-content container">
+    <div class="welcome-badge">3-minute inventory</div>
+    <h1 class="welcome-title">Tradeoffs by Design</h1>
+    <p class="welcome-subtitle">A sociodigital impact calculator</p>
+    <p class="welcome-intro">
+      Every device you use makes a silent trade. You get convenience, connection, and capability.
+      In return, you share data, attention, and sometimes money. This tool helps you see what
+      you're trading — and what you're getting.
+    </p>
+    <div class="welcome-stats">
+      <div class="welcome-stat">
+        <span class="welcome-stat-num">80+</span>
+        <span class="welcome-stat-label">Devices tracked</span>
+      </div>
+      <div class="welcome-stat">
+        <span class="welcome-stat-num">8</span>
+        <span class="welcome-stat-label">Impact dimensions</span>
+      </div>
+      <div class="welcome-stat">
+        <span class="welcome-stat-num">~3 min</span>
+        <span class="welcome-stat-label">To complete</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="goToScreen('devices')">Start My Inventory</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 2 — DEVICE SELECTION
+══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-devices">
+  <div class="container">
+    <div class="page-header">
+      <h2>Which devices are in your life?</h2>
+      <p>Select every device you regularly encounter — at home, work, and out in the world.</p>
+    </div>
+  </div>
+
+  <div class="search-bar-wrap">
+    <div class="container">
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="device-search" placeholder="Search devices…" oninput="filterDevices(this.value)">
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="category-container"></div>
+  </div>
+
+  <div class="devices-footer">
+    <span class="selected-count"><strong id="selected-count">0</strong> devices selected</span>
+    <button class="btn btn-primary" id="devices-next-btn" onclick="goToScreen('frequency')" disabled>Continue →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 3 — FREQUENCY
+══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-frequency">
+  <div class="container">
+    <div class="page-header">
+      <h2>How often do you use each?</h2>
+      <p>Your usage frequency shapes the overall impact of each device.</p>
+    </div>
+    <div class="frequency-list" id="frequency-list"></div>
+  </div>
+  <div class="devices-footer">
+    <button class="btn btn-secondary" onclick="goToScreen('devices')">← Back</button>
+    <button class="btn btn-primary" id="freq-next-btn" onclick="goToScreen('context')">Continue →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 4 — CONTEXT QUESTIONS
+══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-context">
+  <div class="context-card">
+    <div class="context-step-label" id="context-step-label">Question 1 of 3</div>
+    <div class="context-question" id="context-question"></div>
+    <div class="context-options" id="context-options"></div>
+    <div class="context-nav">
+      <button class="btn btn-secondary" id="context-back-btn" onclick="contextBack()">← Back</button>
+      <button class="btn btn-primary" id="context-next-btn" onclick="contextNext()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 5 — RESULTS
+══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-results">
+  <div class="results-hero">
+    <div class="container">
+      <h2 class="results-title">Your Sociodigital Impact</h2>
+      <p class="results-subtitle">Here's what your digital life looks like — in numbers.</p>
+
+      <div class="score-ring-wrap">
+        <div class="score-ring">
+          <svg viewBox="0 0 180 180">
+            <circle class="score-ring-track" cx="90" cy="90" r="80"/>
+            <circle class="score-ring-fill" id="ring-fill" cx="90" cy="90" r="80"/>
+          </svg>
+          <div class="score-ring-inner">
+            <div class="score-number" id="total-score-display">0</div>
+            <div class="score-label">Total Score</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-scores">
+        <div class="sub-score-card">
+          <div class="sub-score-icon">🔍</div>
+          <div class="sub-score-value text-accent" id="sub-data">0</div>
+          <div class="sub-score-name">Data Exposure</div>
+        </div>
+        <div class="sub-score-card">
+          <div class="sub-score-icon">💳</div>
+          <div class="sub-score-value" style="color:var(--amber)" id="sub-financial">0</div>
+          <div class="sub-score-name">Financial Extraction</div>
+        </div>
+        <div class="sub-score-card">
+          <div class="sub-score-icon">📡</div>
+          <div class="sub-score-value" style="color:var(--red)" id="sub-surveillance">0</div>
+          <div class="sub-score-name">Surveillance Footprint</div>
+        </div>
+        <div class="sub-score-card">
+          <div class="sub-score-icon">🔒</div>
+          <div class="sub-score-value" style="color:var(--purple)" id="sub-lockin">0</div>
+          <div class="sub-score-name">Ecosystem Lock-in</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="results-section">
+    <div class="container">
+      <div class="results-section-title">What You Trade / What You Get</div>
+      <div class="tradeoff-grid" id="tradeoff-grid"></div>
+    </div>
+  </div>
+
+  <div class="results-section">
+    <div class="container">
+      <div class="results-section-title">Your Devices &amp; Scores</div>
+      <div class="device-breakdown" id="device-breakdown"></div>
+    </div>
+  </div>
+
+  <div class="results-section">
+    <div class="container">
+      <button class="btn btn-primary" onclick="goToScreen('interpretation')">See Your Interpretation →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 6 — INTERPRETATION
+══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-interpretation">
+  <div class="container">
+    <div class="page-header">
+      <h2>What this means for you</h2>
+      <p>A plain-language read of your sociodigital impact score.</p>
+    </div>
+
+    <div class="interpretation-card">
+      <div class="interpretation-range" id="interp-range-badge"></div>
+      <p class="interpretation-text" id="interp-text"></p>
+    </div>
+
+    <div class="results-section-title" style="margin-top:32px">Some things to consider</div>
+    <div class="next-steps">
+      <div class="next-step-card">
+        <div class="next-step-icon">🔐</div>
+        <div class="next-step-title">Review app permissions</div>
+        <div class="next-step-desc">Audit what location, microphone, and camera access your apps actually need — and revoke what they don't.</div>
+      </div>
+      <div class="next-step-card">
+        <div class="next-step-icon">📋</div>
+        <div class="next-step-title">Read a privacy policy</div>
+        <div class="next-step-desc">Pick one device from your list and actually read what data it collects. The specifics are often surprising.</div>
+      </div>
+      <div class="next-step-card">
+        <div class="next-step-icon">💡</div>
+        <div class="next-step-title">Ask "what do I get?"</div>
+        <div class="next-step-desc">For each high-scoring device, honestly evaluate whether the convenience is worth the tradeoff for you.</div>
+      </div>
+      <div class="next-step-card">
+        <div class="next-step-icon">🔄</div>
+        <div class="next-step-title">Consider the ecosystem</div>
+        <div class="next-step-desc">Devices from the same company amplify each other's data collection — your profile is more than the sum of its parts.</div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button class="btn btn-primary" onclick="exportPDF()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export PDF Report
+      </button>
+      <button class="btn btn-secondary" onclick="goToScreen('results')">← Back to Results</button>
+      <button class="btn btn-secondary" onclick="startOver()">Start Over</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 7 — PRINT / PDF
+══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-print">
+  <div class="print-page" id="print-content"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     CUSTOM DEVICE MODAL
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="custom-modal">
+  <div class="modal">
+    <h3>Add a Custom Device</h3>
+    <p>Name your device, then answer the scoring questions — or skip to use a default score of 8.</p>
+
+    <div class="modal-field">
+      <label>Device name</label>
+      <input type="text" id="custom-device-name" placeholder="e.g. Smart fish tank monitor">
+    </div>
+
+    <div id="rubric-questions"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveCustomDevice()">Add Device</button>
+      <button class="btn btn-secondary" onclick="closeCustomModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════
+const CATEGORIES = [
+  {
+    id: 'personal', name: 'Personal Devices', icon: '📱',
+    color: '#e8f4f3', iconBg: 'var(--accent-light)',
+    devices: [
+      { id: 'smartphone', name: 'iPhone / Android Smartphone', icon: '📱', score: 21, rubric: {app:0,data:4,shared:1,marketing:0,charges:1,upsell:1,repair:1,sensors:12} },
+      { id: 'laptop', name: 'Personal Laptop', icon: '💻', score: 16, rubric: {app:0,data:3,shared:1,marketing:1,charges:0,upsell:0,repair:1,sensors:7} },
+      { id: 'tablet', name: 'iPad / Android Tablet', icon: '📲', score: 14, rubric: {app:0,data:3,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:8} },
+      { id: 'smartwatch', name: 'Smartwatch (Apple Watch, Galaxy Watch)', icon: '⌚', score: 15, rubric: {app:1,data:4,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:6} },
+      { id: 'fitness-wearable', name: 'Fitness / Health Wearable (Oura, Fitbit, Whoop)', icon: '🏃', score: 16, rubric: {app:1,data:5,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:6} },
+      { id: 'nc-headphones', name: 'Noise-Canceling Headphones (Bose, Sony, AirPods Max)', icon: '🎧', score: 4, rubric: {app:1,data:0,shared:0,marketing:0,charges:0,upsell:0,repair:1,sensors:2} },
+      { id: 'earbuds', name: 'Wireless Earbuds (AirPods, Galaxy Buds)', icon: '🎵', score: 6, rubric: {app:1,data:1,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:2} },
+      { id: 'location-tracker', name: 'Location Tracker (AirTag, Tile)', icon: '📍', score: 5, rubric: {app:1,data:1,shared:1,marketing:0,charges:0,upsell:0,repair:0,sensors:2} },
+      { id: 'ereader', name: 'E-reader (Kindle, Kobo)', icon: '📚', score: 9, rubric: {app:0,data:3,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:1} },
+      { id: 'smart-glasses', name: 'Smart Glasses (Ray-Ban Meta)', icon: '👓', score: 14, rubric: {app:1,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:6} },
+      { id: 'cgm', name: 'Continuous Glucose Monitor (Dexcom, Abbott)', icon: '💉', score: 12, rubric: {app:1,data:4,shared:1,marketing:0,charges:1,upsell:1,repair:1,sensors:3} },
+    ]
+  },
+  {
+    id: 'home', name: 'Home Devices', icon: '🏠',
+    color: '#f0f4fe', iconBg: '#e0e8fc',
+    devices: [
+      { id: 'smart-speaker', name: 'Smart Speaker / Voice Assistant (Echo, Google Home)', icon: '🔊', score: 14, rubric: {app:0,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:7} },
+      { id: 'smart-display', name: 'Smart Display (Echo Show, Google Nest Hub)', icon: '🖥️', score: 15, rubric: {app:0,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:8} },
+      { id: 'smart-thermostat', name: 'Smart Thermostat (Nest, Ecobee)', icon: '🌡️', score: 12, rubric: {app:1,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:4} },
+      { id: 'smart-lighting', name: 'Smart Lighting (Philips Hue, LIFX)', icon: '💡', score: 7, rubric: {app:1,data:2,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:1} },
+      { id: 'smart-plug', name: 'Smart Plug / Outlet', icon: '🔌', score: 6, rubric: {app:1,data:2,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:1} },
+      { id: 'robot-vacuum', name: 'Robot Vacuum (Roomba, Eufy, Shark)', icon: '🤖', score: 11, rubric: {app:1,data:4,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:2} },
+      { id: 'smart-exercise', name: 'Smart Exercise Bike / Treadmill (Peloton, NordicTrack)', icon: '🚴', score: 12, rubric: {app:1,data:3,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:3} },
+      { id: 'smart-tv', name: 'Smart TV (Roku, Fire TV, Samsung)', icon: '📺', score: 12, rubric: {app:0,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:5} },
+      { id: 'smart-doorbell', name: 'Smart Doorbell (Ring, Eufy, Nest)', icon: '🔔', score: 20, rubric: {app:1,data:5,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:10} },
+      { id: 'security-camera', name: 'Home Security Camera (indoor or outdoor)', icon: '📷', score: 20, rubric: {app:1,data:5,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:10} },
+      { id: 'smart-lock', name: 'Smart Lock (August, Schlage)', icon: '🔐', score: 10, rubric: {app:1,data:3,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:3} },
+      { id: 'baby-monitor', name: 'Baby Monitor (video-enabled)', icon: '👶', score: 13, rubric: {app:1,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:5} },
+      { id: 'smart-baby-monitor', name: 'Smart Baby / Health Monitor (Owlet)', icon: '🍼', score: 14, rubric: {app:1,data:4,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:4} },
+      { id: 'printer', name: 'Home Printer', icon: '🖨️', score: 4, rubric: {app:0,data:1,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:0} },
+      { id: 'smart-fridge', name: 'Smart Refrigerator', icon: '🧊', score: 11, rubric: {app:1,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:3} },
+      { id: 'smart-appliance', name: 'Smart Washer / Dryer / Dishwasher', icon: '🫧', score: 8, rubric: {app:1,data:2,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:1} },
+      { id: 'smart-oven', name: 'Smart Oven / Air Fryer (June, Breville+)', icon: '🍳', score: 8, rubric: {app:1,data:2,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:1} },
+      { id: 'smart-thermometer', name: 'Smart Meat Thermometer (ChefIQ, MEATER)', icon: '🥩', score: 7, rubric: {app:1,data:1,shared:1,marketing:1,charges:1,upsell:0,repair:1,sensors:1} },
+      { id: 'smart-diffuser', name: 'Smart Fragrance Diffuser (Pura)', icon: '🌸', score: 10, rubric: {app:1,data:3,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:1} },
+      { id: 'smart-coffee', name: 'Smart Coffee Machine (Nespresso, app-enabled)', icon: '☕', score: 6, rubric: {app:0,data:2,shared:1,marketing:0,charges:1,upsell:1,repair:1,sensors:0} },
+      { id: 'digital-frame', name: 'Digital Picture Frame (Aura)', icon: '🖼️', score: 12, rubric: {app:1,data:4,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:2} },
+      { id: 'gaming-console', name: 'Gaming Console (Xbox, PlayStation, Switch)', icon: '🎮', score: 12, rubric: {app:0,data:3,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:4} },
+      { id: 'streaming-device', name: 'Streaming Device (Roku, Chromecast, Apple TV, Fire Stick)', icon: '📡', score: 10, rubric: {app:0,data:3,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:2} },
+      { id: 'smart-garage', name: 'Smart Garage Door Opener', icon: '🚗', score: 8, rubric: {app:1,data:2,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:2} },
+      { id: 'smart-irrigation', name: 'Smart Irrigation / Sprinkler System', icon: '💧', score: 7, rubric: {app:1,data:2,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:1} },
+      { id: 'smart-smoke', name: 'Smart Smoke / CO Detector (Nest Protect)', icon: '🚨', score: 8, rubric: {app:1,data:2,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:2} },
+      { id: 'energy-monitor', name: 'Home Energy Monitor (Sense)', icon: '⚡', score: 9, rubric: {app:1,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:2} },
+      { id: 'pet-tracker', name: 'Pet Tracker (Fi Collar, AirTag on Pet)', icon: '🐾', score: 7, rubric: {app:1,data:2,shared:1,marketing:0,charges:1,upsell:1,repair:1,sensors:1} },
+      { id: 'pet-feeder', name: 'Smart Pet Feeder / Camera (Furbo)', icon: '🐶', score: 10, rubric: {app:1,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:3} },
+    ]
+  },
+  {
+    id: 'community', name: 'Community Devices', icon: '🏪',
+    color: '#fef3e8', iconBg: '#fde8cc',
+    devices: [
+      { id: 'neighbor-camera', name: "Neighbor's Smart Doorbell or Camera", icon: '👁️', score: 20, rubric: {app:1,data:5,shared:1,marketing:1,charges:0,upsell:1,repair:1,sensors:10} },
+      { id: 'grocery-checkout', name: 'Grocery Store Self-Checkout', icon: '🛒', score: 12, rubric: {app:0,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:0,sensors:6} },
+      { id: 'gas-pump', name: 'Gas Station Pump', icon: '⛽', score: 7, rubric: {app:0,data:2,shared:1,marketing:1,charges:0,upsell:1,repair:0,sensors:2} },
+      { id: 'library-checkout', name: 'Public Library Self-Checkout', icon: '📖', score: 8, rubric: {app:0,data:1,shared:1,marketing:0,charges:0,upsell:0,repair:0,sensors:4} },
+      { id: 'pos-terminal', name: 'Square / POS Payment Terminal', icon: '💳', score: 14, rubric: {app:1,data:6,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:3} },
+      { id: 'atm', name: 'ATM', icon: '🏧', score: 6, rubric: {app:0,data:2,shared:1,marketing:0,charges:0,upsell:1,repair:0,sensors:3} },
+      { id: 'rideshare', name: 'Rideshare Vehicle (Uber, Lyft)', icon: '🚕', score: 15, rubric: {app:1,data:5,shared:1,marketing:1,charges:1,upsell:1,repair:0,sensors:5} },
+      { id: 'hotel-controls', name: 'Hotel Smart Room Controls', icon: '🏨', score: 9, rubric: {app:0,data:3,shared:1,marketing:1,charges:0,upsell:1,repair:0,sensors:3} },
+      { id: 'airport-fr', name: 'Airport Facial Recognition / TSA Kiosk', icon: '✈️', score: 13, rubric: {app:0,data:5,shared:1,marketing:0,charges:0,upsell:0,repair:0,sensors:7} },
+      { id: 'gym-equipment', name: 'Gym Connected Equipment (Peloton in gym)', icon: '🏋️', score: 10, rubric: {app:1,data:3,shared:1,marketing:1,charges:1,upsell:1,repair:0,sensors:2} },
+      { id: 'parking-meter', name: 'Smart Parking Meter', icon: '🅿️', score: 6, rubric: {app:0,data:2,shared:1,marketing:1,charges:0,upsell:0,repair:0,sensors:2} },
+      { id: 'city-camera', name: 'City Surveillance / Traffic Camera', icon: '🎥', score: 11, rubric: {app:0,data:3,shared:1,marketing:0,charges:0,upsell:0,repair:0,sensors:7} },
+      { id: 'digital-billboard', name: 'Digital Billboard with Audience Measurement', icon: '📣', score: 8, rubric: {app:0,data:2,shared:1,marketing:1,charges:0,upsell:1,repair:0,sensors:3} },
+    ]
+  },
+  {
+    id: 'work', name: 'Work Devices', icon: '💼',
+    color: '#f0f4fe', iconBg: '#dde5fc',
+    devices: [
+      { id: 'work-laptop', name: 'Work Laptop or Desktop', icon: '🖥️', score: 14, rubric: {app:0,data:2,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:7} },
+      { id: 'keyfob', name: 'Key Fob / Office Access Card', icon: '🗝️', score: 2, rubric: {app:0,data:0,shared:1,marketing:0,charges:0,upsell:0,repair:1,sensors:0} },
+      { id: 'work-phone', name: 'Work Smartphone', icon: '📞', score: 16, rubric: {app:0,data:4,shared:1,marketing:0,charges:0,upsell:0,repair:1,sensors:10} },
+      { id: 'biometric-clock', name: 'Badge / Biometric Time Clock', icon: '🏷️', score: 8, rubric: {app:0,data:3,shared:1,marketing:0,charges:0,upsell:0,repair:0,sensors:4} },
+      { id: 'video-conf', name: 'Video Conferencing Hardware (Owl, Neat, Zoom Room)', icon: '📹', score: 12, rubric: {app:1,data:3,shared:1,marketing:0,charges:1,upsell:1,repair:1,sensors:5} },
+      { id: 'office-printer', name: 'Shared Office Printer / Copier', icon: '🖨️', score: 6, rubric: {app:0,data:2,shared:1,marketing:0,charges:0,upsell:1,repair:0,sensors:2} },
+      { id: 'vpn-device', name: 'Corporate VPN-Connected Device', icon: '🛡️', score: 7, rubric: {app:1,data:3,shared:1,marketing:0,charges:0,upsell:0,repair:1,sensors:1} },
+      { id: 'work-wearable', name: 'Work-Issued Wearable or Tracker', icon: '⌚', score: 10, rubric: {app:1,data:4,shared:1,marketing:0,charges:0,upsell:0,repair:1,sensors:3} },
+    ]
+  },
+  {
+    id: 'vehicle', name: 'Vehicle', icon: '🚗',
+    color: '#f0f5ee', iconBg: '#dceeda',
+    devices: [
+      { id: 'connected-car', name: 'Connected Car or Truck (2015 or newer)', icon: '🚙', score: 27, rubric: {app:0,data:8,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:14} },
+      { id: 'ev', name: 'Electric Vehicle with Connected Charging (Tesla, Rivian)', icon: '⚡', score: 28, rubric: {app:1,data:8,shared:1,marketing:1,charges:1,upsell:1,repair:1,sensors:14} },
+      { id: 'dashcam', name: 'Connected Dash Cam', icon: '📸', score: 10, rubric: {app:1,data:3,shared:1,marketing:0,charges:0,upsell:1,repair:1,sensors:3} },
+      { id: 'obd', name: 'OBD-II Diagnostic Dongle', icon: '🔧', score: 9, rubric: {app:1,data:4,shared:1,marketing:1,charges:0,upsell:1,repair:0,sensors:1} },
+      { id: 'fleet-tracker', name: 'GPS Fleet Tracker (work vehicle)', icon: '🗺️', score: 11, rubric: {app:1,data:4,shared:1,marketing:0,charges:1,upsell:0,repair:0,sensors:4} },
+    ]
+  }
+];
+
+const FREQUENCY_OPTIONS = [
+  { label: 'Hourly', multiplier: 2.0 },
+  { label: 'Daily', multiplier: 1.5 },
+  { label: 'Weekly', multiplier: 1.0 },
+  { label: 'Monthly', multiplier: 0.75 },
+  { label: 'Rarely / Passively', multiplier: 0.5 },
+];
+
+const CONTEXT_QUESTIONS = [
+  {
+    q: 'Do you frequently use "Sign in with Google" or "Sign in with Apple" to log into other apps and websites?',
+    options: [
+      { label: 'Yes, often', pts: 3 },
+      { label: 'Sometimes', pts: 1 },
+      { label: 'Rarely / Never', pts: 0 },
+    ]
+  },
+  {
+    q: 'Do children or teens use any of these devices in your household?',
+    options: [
+      { label: 'Yes', pts: 3 },
+      { label: 'Sometimes / occasionally', pts: 1 },
+      { label: 'No', pts: 0 },
+    ]
+  },
+  {
+    q: 'How many active app subscriptions are tied to your devices? (fitness apps, smart home apps, streaming, gaming, etc.)',
+    options: [
+      { label: '5 or more', pts: 4 },
+      { label: '3–4', pts: 2 },
+      { label: '1–2', pts: 1 },
+      { label: 'None', pts: 0 },
+    ]
+  },
+];
+
+const TRADEOFFS = {
+  personal: {
+    icon: '📱', name: 'Personal Devices',
+    get: 'Seamless communication, health insights, and navigation.',
+    trade: 'Location history, biometric data, face recognition data, and behavioral patterns.'
+  },
+  home: {
+    icon: '🏠', name: 'Home Devices',
+    get: 'Automation, comfort, and security.',
+    trade: 'A map of your home, your daily routines, your household habits, and in many cases a monthly subscription fee.'
+  },
+  community: {
+    icon: '🏪', name: 'Community Devices',
+    get: 'Speed and convenience at checkout, fuel, and in public spaces.',
+    trade: 'Payment data, movement patterns, and in some cases you appear on a neighbor\'s or business\'s security footage without consent.'
+  },
+  work: {
+    icon: '💼', name: 'Work Devices',
+    get: 'Access and productivity.',
+    trade: 'Your work patterns, location within the building, and identity data to your employer and their vendors.'
+  },
+  vehicle: {
+    icon: '🚗', name: 'Vehicle',
+    get: 'Navigation, diagnostics, and connectivity.',
+    trade: 'Your precise location history, driving behavior, trip frequency, and in newer vehicles, occupancy and behavioral data.'
+  },
+};
+
+const SCORE_RANGES = [
+  { max: 50, label: 'Light Footprint', cls: 'range-low', text: "Your digital footprint is relatively light. You interact with fewer connected devices and your data exposure is limited compared to the average connected household." },
+  { max: 150, label: 'Moderate Impact', cls: 'range-medium', text: "You have a moderate sociodigital impact. Like most people in connected households, you trade meaningful amounts of data for convenience on a daily basis." },
+  { max: 300, label: 'Significant Impact', cls: 'range-high', text: "Your sociodigital impact is significant. You're deeply embedded in several device ecosystems, and your data — location, biometrics, behavior, and finances — is actively being collected and used." },
+  { max: Infinity, label: 'High Impact', cls: 'range-very-high', text: "Your sociodigital impact is high. You interact with a wide range of data-collecting systems daily. The tradeoffs you're making are substantial — and mostly invisible." },
+];
+
+// ════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════
+const state = {
+  selectedDevices: {},   // id -> device object
+  frequencies: {},       // id -> multiplier
+  contextAnswers: [null, null, null],
+  currentContextQ: 0,
+  customDevices: [],
+  currentCustomCategory: null,
+  scores: null,
+};
+
+// ════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════
+const SCREEN_ORDER = ['welcome', 'devices', 'frequency', 'context', 'results', 'interpretation'];
+
+function goToScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  el.classList.add('active');
+
+  const pb = document.getElementById('progress-bar');
+  if (name === 'welcome') {
+    pb.classList.add('hidden');
+  } else {
+    pb.classList.remove('hidden');
+    updateProgress(name);
+  }
+
+  if (name === 'frequency') renderFrequencyScreen();
+  if (name === 'context') {
+    state.currentContextQ = 0;
+    renderContextQuestion();
+  }
+  if (name === 'results') {
+    computeScores();
+    renderResults();
+  }
+  if (name === 'interpretation') renderInterpretation();
+
+  window.scrollTo(0, 0);
+}
+
+function updateProgress(screen) {
+  const steps = ['devices', 'frequency', 'context', 'results', 'interpretation'];
+  const idx = steps.indexOf(screen);
+  const pct = ((idx + 1) / steps.length * 100).toFixed(0);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `Step ${idx + 1} of ${steps.length}`;
+
+  const dots = document.getElementById('progress-dots');
+  dots.innerHTML = steps.map((s, i) =>
+    `<div class="progress-dot ${i < idx ? 'done' : i === idx ? 'current' : ''}"></div>`
+  ).join('');
+}
+
+function startOver() {
+  state.selectedDevices = {};
+  state.frequencies = {};
+  state.contextAnswers = [null, null, null];
+  state.currentContextQ = 0;
+  state.customDevices = [];
+  state.scores = null;
+  renderDeviceGrid();
+  goToScreen('welcome');
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 2 — DEVICE SELECTION
+// ════════════════════════════════════════════════════════
+function renderDeviceGrid() {
+  const container = document.getElementById('category-container');
+  container.innerHTML = CATEGORIES.map(cat => renderCategory(cat)).join('');
+}
+
+function renderCategory(cat) {
+  const deviceCards = cat.devices.map(d => renderDeviceCard(d, cat.id)).join('');
+  return `
+    <div class="category-section" id="cat-section-${cat.id}">
+      <div class="category-header" onclick="toggleCategory('${cat.id}')">
+        <div class="category-header-left">
+          <div class="category-icon" style="background:${cat.color}">${cat.icon}</div>
+          <div class="category-info">
+            <h4>${cat.name}</h4>
+            <span id="cat-count-${cat.id}">${cat.devices.length} devices</span>
+          </div>
+        </div>
+        <svg class="category-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="device-grid" id="grid-${cat.id}">
+        ${deviceCards}
+        <div class="add-custom-btn" onclick="openCustomModal('${cat.id}')">+ Add custom device</div>
+      </div>
+    </div>`;
+}
+
+function renderDeviceCard(device, catId) {
+  const sel = state.selectedDevices[device.id] ? 'selected' : '';
+  return `
+    <div class="device-card ${sel}" id="card-${device.id}" onclick="toggleDevice('${device.id}', '${catId}')">
+      <div class="device-card-icon">${device.icon}</div>
+      <div class="device-card-name">${device.name}</div>
+      <div class="device-card-score">Base score: ${device.score}</div>
+    </div>`;
+}
+
+function toggleCategory(catId) {
+  const section = document.getElementById('cat-section-' + catId);
+  section.classList.toggle('open');
+}
+
+function toggleDevice(deviceId, catId) {
+  const allDevices = getAllDevices();
+  const device = allDevices.find(d => d.id === deviceId);
+  if (!device) return;
+
+  if (state.selectedDevices[deviceId]) {
+    delete state.selectedDevices[deviceId];
+    delete state.frequencies[deviceId];
+  } else {
+    state.selectedDevices[deviceId] = { ...device, categoryId: catId };
+    state.frequencies[deviceId] = 1.5; // default: daily
+  }
+
+  const card = document.getElementById('card-' + deviceId);
+  if (card) card.classList.toggle('selected', !!state.selectedDevices[deviceId]);
+
+  updateSelectedCount();
+}
+
+function getAllDevices() {
+  const all = [];
+  CATEGORIES.forEach(cat => all.push(...cat.devices));
+  all.push(...state.customDevices);
+  return all;
+}
+
+function updateSelectedCount() {
+  const count = Object.keys(state.selectedDevices).length;
+  document.getElementById('selected-count').textContent = count;
+  document.getElementById('devices-next-btn').disabled = count === 0;
+}
+
+function filterDevices(query) {
+  const q = query.toLowerCase().trim();
+  CATEGORIES.forEach(cat => {
+    const section = document.getElementById('cat-section-' + cat.id);
+    let visibleCount = 0;
+    cat.devices.forEach(d => {
+      const card = document.getElementById('card-' + d.id);
+      if (!card) return;
+      const match = !q || d.name.toLowerCase().includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+    if (q) {
+      if (visibleCount > 0) section.classList.add('open');
+      section.style.display = '';
+    } else {
+      section.style.display = '';
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 3 — FREQUENCY
+// ════════════════════════════════════════════════════════
+function renderFrequencyScreen() {
+  const list = document.getElementById('frequency-list');
+  const selected = Object.values(state.selectedDevices);
+
+  if (selected.length === 0) {
+    list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">No devices selected.</p>';
+    return;
+  }
+
+  list.innerHTML = selected.map(device => {
+    const catName = getCategoryName(device.categoryId);
+    return `
+      <div class="frequency-item">
+        <div class="frequency-item-header">
+          <div class="frequency-item-icon">${device.icon}</div>
+          <div>
+            <div class="frequency-item-name">${device.name}</div>
+            <div class="frequency-item-cat">${catName}</div>
+          </div>
+        </div>
+        <div class="frequency-options">
+          ${FREQUENCY_OPTIONS.map(opt => {
+            const sel = state.frequencies[device.id] === opt.multiplier ? 'selected' : '';
+            return `<button class="freq-btn ${sel}" onclick="setFrequency('${device.id}', ${opt.multiplier}, this)">${opt.label}</button>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function setFrequency(deviceId, multiplier, btn) {
+  state.frequencies[deviceId] = multiplier;
+  const options = btn.parentElement.querySelectorAll('.freq-btn');
+  options.forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function getCategoryName(catId) {
+  const cat = CATEGORIES.find(c => c.id === catId);
+  return cat ? cat.name : 'Custom';
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 4 — CONTEXT QUESTIONS
+// ════════════════════════════════════════════════════════
+function renderContextQuestion() {
+  const q = CONTEXT_QUESTIONS[state.currentContextQ];
+  document.getElementById('context-step-label').textContent = `Question ${state.currentContextQ + 1} of ${CONTEXT_QUESTIONS.length}`;
+  document.getElementById('context-question').textContent = q.q;
+  document.getElementById('context-options').innerHTML = q.options.map((opt, i) => {
+    const sel = state.contextAnswers[state.currentContextQ] === opt.pts ? 'selected' : '';
+    const ptsLabel = opt.pts > 0 ? `+${opt.pts}` : '±0';
+    return `
+      <div class="context-option ${sel}" onclick="selectContextAnswer(${opt.pts}, this)">
+        <span class="context-option-label">${opt.label}</span>
+        <span class="context-option-pts">${ptsLabel}</span>
+      </div>`;
+  }).join('');
+
+  const backBtn = document.getElementById('context-back-btn');
+  if (state.currentContextQ === 0) {
+    backBtn.onclick = () => goToScreen('frequency');
+    backBtn.textContent = '← Back';
+  } else {
+    backBtn.onclick = contextBack;
+    backBtn.textContent = '← Back';
+  }
+}
+
+function selectContextAnswer(pts, el) {
+  state.contextAnswers[state.currentContextQ] = pts;
+  document.querySelectorAll('.context-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function contextNext() {
+  if (state.contextAnswers[state.currentContextQ] === null) {
+    state.contextAnswers[state.currentContextQ] = 0;
+  }
+  if (state.currentContextQ < CONTEXT_QUESTIONS.length - 1) {
+    state.currentContextQ++;
+    renderContextQuestion();
+  } else {
+    goToScreen('results');
+  }
+}
+
+function contextBack() {
+  if (state.currentContextQ > 0) {
+    state.currentContextQ--;
+    renderContextQuestion();
+  } else {
+    goToScreen('frequency');
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// SCORING ENGINE
+// ════════════════════════════════════════════════════════
+function computeScores() {
+  let totalDataExposure = 0;
+  let totalFinancial = 0;
+  let totalSurveillance = 0;
+  let totalLockIn = 0;
+  const deviceScores = [];
+
+  Object.values(state.selectedDevices).forEach(device => {
+    const freq = state.frequencies[device.id] || 1.0;
+    const r = device.rubric;
+    const rawScore = device.score;
+
+    const weighted = rawScore * freq;
+
+    // sub-scores (use freq-multiplied fractions)
+    const dataRaw = (r.data + r.shared) * freq;
+    const financialRaw = (r.charges + r.upsell) * freq;
+    const surveillanceRaw = r.sensors * freq;
+    const lockInRaw = (r.app + r.repair) * freq;
+
+    totalDataExposure += dataRaw;
+    totalFinancial += financialRaw;
+    totalSurveillance += surveillanceRaw;
+    totalLockIn += lockInRaw;
+
+    deviceScores.push({ device, freq, rawScore, weighted });
+  });
+
+  const contextBonus = state.contextAnswers.reduce((sum, a) => sum + (a || 0), 0);
+  const total = totalDataExposure + totalFinancial + totalSurveillance + totalLockIn + contextBonus;
+
+  state.scores = {
+    total: Math.round(total),
+    dataExposure: Math.round(totalDataExposure),
+    financial: Math.round(totalFinancial),
+    surveillance: Math.round(totalSurveillance),
+    lockIn: Math.round(totalLockIn),
+    contextBonus,
+    deviceScores,
+  };
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 5 — RESULTS
+// ════════════════════════════════════════════════════════
+function renderResults() {
+  const s = state.scores;
+
+  // Animate score
+  animateNumber('total-score-display', s.total, 1200);
+  animateNumber('sub-data', s.dataExposure, 900);
+  animateNumber('sub-financial', s.financial, 900);
+  animateNumber('sub-surveillance', s.surveillance, 900);
+  animateNumber('sub-lockin', s.lockIn, 900);
+
+  // Ring
+  const ring = document.getElementById('ring-fill');
+  const maxScore = 400;
+  const circumference = 2 * Math.PI * 80;
+  const dashOffset = circumference - (Math.min(s.total, maxScore) / maxScore) * circumference;
+  setTimeout(() => {
+    ring.style.strokeDashoffset = dashOffset;
+    const pct = s.total / maxScore;
+    ring.style.stroke = pct < 0.33 ? 'var(--green)' : pct < 0.66 ? 'var(--amber)' : 'var(--red)';
+  }, 100);
+
+  // Tradeoffs
+  const usedCats = new Set(Object.values(state.selectedDevices).map(d => d.categoryId));
+  const grid = document.getElementById('tradeoff-grid');
+  grid.innerHTML = [...usedCats].map(catId => {
+    const t = TRADEOFFS[catId];
+    if (!t) return '';
+    return `
+      <div class="tradeoff-card">
+        <div class="tradeoff-card-header">
+          <span class="tradeoff-cat-icon">${t.icon}</span>
+          <span class="tradeoff-cat-name">${t.name}</span>
+        </div>
+        <div class="tradeoff-body">
+          <div class="tradeoff-col get">
+            <div class="tradeoff-col-label">You Get</div>
+            <p>${t.get}</p>
+          </div>
+          <div class="tradeoff-col trade">
+            <div class="tradeoff-col-label">You Trade</div>
+            <p>${t.trade}</p>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Device breakdown
+  const breakdown = document.getElementById('device-breakdown');
+  const sorted = [...s.deviceScores].sort((a, b) => b.weighted - a.weighted);
+  breakdown.innerHTML = sorted.map(({ device, freq, weighted }) => {
+    const freqLabel = FREQUENCY_OPTIONS.find(o => o.multiplier === freq)?.label || 'Daily';
+    return `
+      <div class="device-breakdown-item">
+        <div class="device-breakdown-left">
+          <div class="device-breakdown-icon">${device.icon}</div>
+          <div>
+            <div class="device-breakdown-name">${device.name}</div>
+            <div class="device-breakdown-freq">${freqLabel} · Base ${device.score}</div>
+          </div>
+        </div>
+        <div class="device-breakdown-score">${Math.round(weighted)}</div>
+      </div>`;
+  }).join('');
+}
+
+function animateNumber(id, target, duration) {
+  const el = document.getElementById(id);
+  const start = performance.now();
+  function step(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(ease * target);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 6 — INTERPRETATION
+// ════════════════════════════════════════════════════════
+function renderInterpretation() {
+  const s = state.scores;
+  const range = SCORE_RANGES.find(r => s.total <= r.max);
+  const badge = document.getElementById('interp-range-badge');
+  badge.textContent = `Score ${s.total} — ${range.label}`;
+  badge.className = 'interpretation-range ' + range.cls;
+  document.getElementById('interp-text').textContent = range.text;
+}
+
+// ════════════════════════════════════════════════════════
+// PDF EXPORT
+// ════════════════════════════════════════════════════════
+function exportPDF() {
+  const s = state.scores;
+  const range = SCORE_RANGES.find(r => s.total <= r.max);
+  const usedCats = new Set(Object.values(state.selectedDevices).map(d => d.categoryId));
+  const sorted = [...s.deviceScores].sort((a, b) => b.weighted - a.weighted);
+
+  const tradeoffRows = [...usedCats].map(catId => {
+    const t = TRADEOFFS[catId];
+    if (!t) return '';
+    return `
+      <div class="print-tradeoff-row">
+        <div class="print-tradeoff-col get"><h4>${t.icon} ${t.name} — You Get</h4><p>${t.get}</p></div>
+        <div class="print-tradeoff-col trade"><h4>You Trade</h4><p>${t.trade}</p></div>
+      </div>`;
+  }).join('');
+
+  const deviceRows = sorted.map(({ device, freq, weighted }) => {
+    const freqLabel = FREQUENCY_OPTIONS.find(o => o.multiplier === freq)?.label || 'Daily';
+    return `<tr>
+      <td>${device.icon} ${device.name}</td>
+      <td>${getCategoryName(device.categoryId)}</td>
+      <td>${freqLabel}</td>
+      <td style="text-align:right;font-weight:700">${Math.round(weighted)}</td>
+    </tr>`;
+  }).join('');
+
+  const print = document.getElementById('print-content');
+  print.innerHTML = `
+    <div class="print-header">
+      <h1>Tradeoffs by Design</h1>
+      <p>Sociodigital Impact Report &nbsp;·&nbsp; Generated ${new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'})}</p>
+    </div>
+
+    <div class="print-score-row">
+      <div class="print-score-main">
+        <div class="num">${s.total}</div>
+        <div class="lbl">Total Score</div>
+      </div>
+    </div>
+
+    <div class="print-sub-scores">
+      <div class="print-sub"><div class="val">${s.dataExposure}</div><div class="lbl">Data Exposure</div></div>
+      <div class="print-sub"><div class="val">${s.financial}</div><div class="lbl">Financial Extraction</div></div>
+      <div class="print-sub"><div class="val">${s.surveillance}</div><div class="lbl">Surveillance Footprint</div></div>
+      <div class="print-sub"><div class="val">${s.lockIn}</div><div class="lbl">Ecosystem Lock-in</div></div>
+    </div>
+
+    <div class="print-interpretation-box">${range.text}</div>
+
+    <div class="print-section-title">Device Inventory</div>
+    <table class="print-device-table">
+      <thead><tr><th>Device</th><th>Category</th><th>Frequency</th><th style="text-align:right">Score</th></tr></thead>
+      <tbody>${deviceRows}</tbody>
+    </table>
+
+    <div class="print-section-title">What You Trade / What You Get</div>
+    ${tradeoffRows}
+
+    <div class="print-footer">
+      Generated by Tradeoffs by Design — a sociodigital impact tool developed as part of ANTH 542: Emerging Digital Cultures, Boise State University.
+    </div>`;
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-print').classList.add('active');
+  document.getElementById('progress-bar').classList.add('hidden');
+
+  setTimeout(() => {
+    window.print();
+    // Return to interpretation after print dialog
+    document.getElementById('screen-print').classList.remove('active');
+    document.getElementById('screen-interpretation').classList.add('active');
+    document.getElementById('progress-bar').classList.remove('hidden');
+    updateProgress('interpretation');
+  }, 300);
+}
+
+// ════════════════════════════════════════════════════════
+// CUSTOM DEVICE MODAL
+// ════════════════════════════════════════════════════════
+const RUBRIC_QUESTIONS = [
+  { key: 'app', label: 'Requires companion app to function?' },
+  { key: 'data', label: 'Number of distinct identifying data elements collected (0–8)', type: 'number', max: 8 },
+  { key: 'shared', label: 'Identifying info shared across internal or external databases?' },
+  { key: 'marketing', label: 'Identifying info used for marketing / advertising?' },
+  { key: 'charges', label: 'Passive or automatic charges associated with device / services?' },
+  { key: 'upsell', label: 'Prompts or pathways encouraging additional purchases?' },
+  { key: 'repair', label: 'Manual repair restricted, impractical, or discouraged?' },
+  { key: 'sensors', label: 'Number of distinct sensing capabilities (0–12)', type: 'number', max: 12 },
+];
+
+const customRubricState = {};
+
+function openCustomModal(catId) {
+  state.currentCustomCategory = catId;
+  Object.keys(customRubricState).forEach(k => delete customRubricState[k]);
+
+  const nameInput = document.getElementById('custom-device-name');
+  nameInput.value = '';
+
+  const container = document.getElementById('rubric-questions');
+  container.innerHTML = RUBRIC_QUESTIONS.map(q => {
+    if (q.type === 'number') {
+      return `
+        <div class="rubric-question">
+          <div class="rubric-question-label">${q.label}</div>
+          <div class="rubric-radio-group">
+            ${Array.from({length: q.max + 1}, (_, i) => `
+              <span class="rubric-radio" data-key="${q.key}" data-val="${i}" onclick="selectRubric('${q.key}', ${i}, this)">${i}</span>
+            `).join('')}
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="rubric-question">
+        <div class="rubric-question-label">${q.label}</div>
+        <div class="rubric-radio-group">
+          <span class="rubric-radio" data-key="${q.key}" data-val="0" onclick="selectRubric('${q.key}', 0, this)">No (0)</span>
+          <span class="rubric-radio" data-key="${q.key}" data-val="1" onclick="selectRubric('${q.key}', 1, this)">Yes (1)</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('custom-modal').classList.add('open');
+}
+
+function selectRubric(key, val, el) {
+  customRubricState[key] = val;
+  const group = el.parentElement;
+  group.querySelectorAll('.rubric-radio').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function closeCustomModal() {
+  document.getElementById('custom-modal').classList.remove('open');
+}
+
+function saveCustomDevice() {
+  const name = document.getElementById('custom-device-name').value.trim();
+  if (!name) {
+    document.getElementById('custom-device-name').focus();
+    return;
+  }
+
+  const rubric = {};
+  RUBRIC_QUESTIONS.forEach(q => {
+    rubric[q.key] = customRubricState[q.key] ?? null;
+  });
+
+  const hasAnswers = Object.values(rubric).some(v => v !== null);
+  let score;
+  if (hasAnswers) {
+    score = Object.values(rubric).reduce((sum, v) => sum + (v || 0), 0);
+  } else {
+    score = 8;
+    RUBRIC_QUESTIONS.forEach(q => { rubric[q.key] = 0; });
+  }
+
+  const id = 'custom-' + Date.now();
+  const device = {
+    id,
+    name,
+    icon: '📦',
+    score,
+    rubric,
+    categoryId: state.currentCustomCategory,
+    isCustom: true,
+  };
+
+  state.customDevices.push(device);
+  state.selectedDevices[id] = { ...device };
+  state.frequencies[id] = 1.5;
+
+  // Add card to grid
+  const grid = document.getElementById('grid-' + state.currentCustomCategory);
+  if (grid) {
+    const addBtn = grid.querySelector('.add-custom-btn');
+    const cardEl = document.createElement('div');
+    cardEl.innerHTML = `
+      <div class="device-card selected" id="card-${id}" onclick="toggleDevice('${id}', '${state.currentCustomCategory}')">
+        <div class="device-card-icon">📦</div>
+        <div class="device-card-name">${name}</div>
+        <div class="device-card-score">Base score: ${score}</div>
+      </div>`;
+    grid.insertBefore(cardEl.firstElementChild, addBtn);
+  }
+
+  updateSelectedCount();
+  closeCustomModal();
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  renderDeviceGrid();
+  // Open first category by default
+  const firstSection = document.querySelector('.category-section');
+  if (firstSection) firstSection.classList.add('open');
+});
+</script>
+</body>
+</html>
