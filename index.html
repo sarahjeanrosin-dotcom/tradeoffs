@@ -152,7 +152,7 @@ p { color: var(--text2); }
 .btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 8px; }
 
 /* ── SCREEN 1: WELCOME ────────────────────────────────── */
-#screen-welcome {
+#screen-welcome.active {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -343,10 +343,10 @@ p { color: var(--text2); }
 .devices-footer {
   position: sticky;
   bottom: 0;
-  background: rgba(250,249,247,0.95);
-  backdrop-filter: blur(8px);
+  background: rgba(250,249,247,0.96);
+  backdrop-filter: blur(10px);
   border-top: 1px solid var(--border);
-  padding: 16px 20px;
+  padding: 12px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -357,6 +357,21 @@ p { color: var(--text2); }
   color: var(--text2);
 }
 .selected-count strong { color: var(--accent); }
+
+/* Ghost back button */
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 4px;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+.btn-ghost:hover { color: var(--text2); }
 
 /* ── SCREEN 3: FREQUENCY ──────────────────────────────── */
 #screen-frequency .page-header { padding: 40px 0 24px; }
@@ -407,7 +422,7 @@ p { color: var(--text2); }
 }
 
 /* ── SCREEN 4: CONTEXT QUESTIONS ──────────────────────── */
-#screen-context {
+#screen-context.active {
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -803,6 +818,134 @@ p { color: var(--text2); }
   .no-print { display: none !important; }
 }
 
+/* ── HELP ICON & MODAL ────────────────────────────────── */
+.help-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 150;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow-md);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 16px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.help-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 4px 20px rgba(74,158,149,0.2); }
+
+.help-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.help-modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.help-modal {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 36px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  transform: scale(0.95);
+  transition: transform 0.25s;
+}
+.help-modal-overlay.open .help-modal { transform: scale(1); }
+
+.help-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.help-modal-header h3 { margin: 0; }
+.help-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 20px; line-height: 1;
+  padding: 4px; transition: color 0.2s;
+}
+.help-close:hover { color: var(--text); }
+
+.help-intro {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rubric-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.rubric-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.rubric-pts {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.rubric-text strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+  margin-bottom: 2px;
+}
+.rubric-text span {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.5;
+}
+
+.help-freq-section {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+.help-freq-section h4 { margin-bottom: 12px; font-size: 14px; }
+.freq-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.freq-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.freq-table tr:last-child td { border-bottom: none; }
+.freq-table td:last-child { text-align: right; color: var(--accent); font-weight: 700; }
+
 /* ── MISC UTILITIES ───────────────────────────────────── */
 .hidden { display: none !important; }
 .mt-4 { margin-top: 16px; }
@@ -922,7 +1065,7 @@ p { color: var(--text2); }
     <div class="frequency-list" id="frequency-list"></div>
   </div>
   <div class="devices-footer">
-    <button class="btn btn-secondary" onclick="goToScreen('devices')">← Back</button>
+    <button class="btn-ghost" onclick="goToScreen('devices')">← Back</button>
     <button class="btn btn-primary" id="freq-next-btn" onclick="goToScreen('context')">Continue →</button>
   </div>
 </div>
@@ -936,7 +1079,7 @@ p { color: var(--text2); }
     <div class="context-question" id="context-question"></div>
     <div class="context-options" id="context-options"></div>
     <div class="context-nav">
-      <button class="btn btn-secondary" id="context-back-btn" onclick="contextBack()">← Back</button>
+      <button class="btn-ghost" id="context-back-btn" onclick="contextBack()">← Back</button>
       <button class="btn btn-primary" id="context-next-btn" onclick="contextNext()">Continue →</button>
     </div>
   </div>
@@ -1070,6 +1213,94 @@ p { color: var(--text2); }
 <!-- ══════════════════════════════════════════════════════
      CUSTOM DEVICE MODAL
 ══════════════════════════════════════════════════════ -->
+<!-- ── HELP BUTTON ────────────────────────────────────── -->
+<button class="help-btn" id="help-btn" onclick="openHelpModal()" title="How scoring works">?</button>
+
+<!-- ── HELP MODAL ────────────────────────────────────── -->
+<div class="help-modal-overlay" id="help-modal-overlay">
+  <div class="help-modal">
+    <div class="help-modal-header">
+      <h3>How Devices Are Scored</h3>
+      <button class="help-close" onclick="closeHelpModal()">✕</button>
+    </div>
+    <p class="help-intro">
+      Each device receives a base score calculated across 8 dimensions. Scores are then multiplied
+      by how often you use the device, and summed with your context question bonuses for a final
+      Sociodigital Impact Score.
+    </p>
+
+    <div class="rubric-list">
+      <div class="rubric-row">
+        <div class="rubric-pts">+1</div>
+        <div class="rubric-text">
+          <strong>Companion App Required</strong>
+          <span>Device requires a paired app on your phone or computer to function fully.</span>
+        </div>
+      </div>
+      <div class="rubric-row">
+        <div class="rubric-pts">+1<br><span style="font-size:10px;font-weight:400">each</span></div>
+        <div class="rubric-text">
+          <strong>Identifying Data Collected</strong>
+          <span>Each distinct type of personal data collected: name, location, biometrics, usage patterns, payment info, etc.</span>
+        </div>
+      </div>
+      <div class="rubric-row">
+        <div class="rubric-pts">+1</div>
+        <div class="rubric-text">
+          <strong>Data Shared Externally</strong>
+          <span>Your identifying data is shared with third-party partners, data brokers, or other internal systems.</span>
+        </div>
+      </div>
+      <div class="rubric-row">
+        <div class="rubric-pts">+1</div>
+        <div class="rubric-text">
+          <strong>Used for Marketing or Targeting</strong>
+          <span>Your data is used to serve you ads, personalized offers, or behavioral nudges.</span>
+        </div>
+      </div>
+      <div class="rubric-row">
+        <div class="rubric-pts">+1</div>
+        <div class="rubric-text">
+          <strong>Passive or Automatic Charges</strong>
+          <span>Subscriptions, in-app purchases, or recurring fees tied to the device or its services.</span>
+        </div>
+      </div>
+      <div class="rubric-row">
+        <div class="rubric-pts">+1</div>
+        <div class="rubric-text">
+          <strong>Ecosystem Upsell Pathways</strong>
+          <span>The device actively encourages you to buy more products, upgrade, or expand within the same ecosystem.</span>
+        </div>
+      </div>
+      <div class="rubric-row">
+        <div class="rubric-pts">+1</div>
+        <div class="rubric-text">
+          <strong>Repair Restricted or Discouraged</strong>
+          <span>Self-repair is impractical, voided by warranty, or actively blocked by the manufacturer.</span>
+        </div>
+      </div>
+      <div class="rubric-row">
+        <div class="rubric-pts">+1<br><span style="font-size:10px;font-weight:400">each</span></div>
+        <div class="rubric-text">
+          <strong>Sensing Capabilities</strong>
+          <span>Each distinct sensor: camera, microphone, GPS, accelerometer, heart rate, temperature, etc.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-freq-section">
+      <h4>Frequency Multipliers</h4>
+      <table class="freq-table">
+        <tr><td>Hourly</td><td>2.0×</td></tr>
+        <tr><td>Daily</td><td>1.5×</td></tr>
+        <tr><td>Weekly</td><td>1.0×</td></tr>
+        <tr><td>Monthly</td><td>0.75×</td></tr>
+        <tr><td>Rarely / Passively</td><td>0.5×</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="custom-modal">
   <div class="modal">
     <h3>Add a Custom Device</h3>
@@ -1287,11 +1518,15 @@ function goToScreen(name) {
   el.classList.add('active');
 
   const pb = document.getElementById('progress-bar');
+  const helpBtn = document.getElementById('help-btn');
+  const quizScreens = ['devices', 'frequency', 'context'];
   if (name === 'welcome' || name === 'results' || name === 'interpretation') {
     pb.classList.add('hidden');
+    helpBtn.style.display = 'none';
   } else {
     pb.classList.remove('hidden');
     updateProgress(name);
+    helpBtn.style.display = quizScreens.includes(name) ? 'flex' : 'none';
   }
 
   if (name === 'frequency') renderFrequencyScreen();
@@ -1858,6 +2093,20 @@ function saveCustomDevice() {
   updateSelectedCount();
   closeCustomModal();
 }
+
+// ════════════════════════════════════════════════════════
+// HELP MODAL
+// ════════════════════════════════════════════════════════
+function openHelpModal() {
+  document.getElementById('help-modal-overlay').classList.add('open');
+}
+function closeHelpModal() {
+  document.getElementById('help-modal-overlay').classList.remove('open');
+}
+document.addEventListener('click', e => {
+  if (e.target.id === 'help-modal-overlay') closeHelpModal();
+  if (e.target.id === 'custom-modal') closeCustomModal();
+});
 
 // ════════════════════════════════════════════════════════
 // INIT
